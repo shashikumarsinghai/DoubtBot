@@ -76,15 +76,38 @@ def verify_quiz(mistral_client, questions):
         content = content.strip()
 
     verification = json.loads(content)
-    
+
     is_valid = verification.get("valid")
-    
+
     if is_valid is None:
         is_valid = verification.get("overall_validity")
-    
+
+    if is_valid is None:
+        is_valid = verification.get("overall")
+
+    if is_valid is None:
+        verification_list = verification.get("verification")
+
+        if isinstance(verification_list, list):
+
+            is_valid = (
+                len(verification_list) > 0
+                and all(
+                    item.get("valid") is True
+                    for item in verification_list
+                    if isinstance(item, dict)
+                )
+                and all(
+                    isinstance(item, dict)
+                    and item.get("valid") is True
+                    for item in verification_list
+                )
+            )
+
     if is_valid is not True:
+
         print("Quiz verification failed: ", verification)
-        
+
         raise ValueError(
             "Quiz failed accuracy verification."
         )

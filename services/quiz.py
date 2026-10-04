@@ -76,9 +76,13 @@ def verify_quiz(mistral_client, questions):
         content = content.strip()
 
     verification = json.loads(content)
-
-    if verification.get("valid") is not True:
-
+    
+    is_valid = verification.get("valid")
+    
+    if is_valid is None:
+        is_valid = verification.get("overall_validity")
+    
+    if is_valid is not True:
         print("Quiz verification failed: ", verification)
         
         raise ValueError(
@@ -105,81 +109,25 @@ def generate_quiz(mistral_client, message):
     base_prompt = f"""
     You are a highly accurate quiz generator for DoubtBot.
 
-    USER TOPIC:
+    USER REQUEST:
     {message}
 
-    YOUR TASK:
-
+    TASK:
     Generate EXACTLY {question_count} multiple-choice questions
     about the user's requested topic.
 
-    CRITICAL REQUIREMENTS:
+    OUTPUT REQUIREMENTS:
+    - Return EXACTLY {question_count} questions.
+    - Every question must have exactly 4 options.
+    - Every question must have exactly ONE correct option.
+    - The answer field must be a zero-based index: 0, 1, 2, or 3.
+    - The explanation must explain why that exact option is correct.
+    - Return ONLY valid JSON.
+    - Do NOT return markdown.
+    - Do NOT return ```json.
+    - Do NOT add text outside JSON.
 
-    - Generate EXACTLY {question_count} questions.
-    - Do NOT generate fewer.
-    - Do NOT generate more.
-    - Every question must have EXACTLY 4 options.
-    - Every question must have EXACTLY ONE correct option.
-    - Every question must be different.
-    - Do NOT repeat questions.
-    - Do NOT repeat options within the same question.
-    - All 4 options must be different from each other.
-    - The correct answer must be one of the 4 options.
-    - The answer field must be a zero-based index.
-    - The answer index must be 0, 1, 2, or 3.
-    - The explanation must match the correct option.
-
-    OPTION RULE:
-
-    For every question, carefully compare all four options.
-
-    Option A, B, C and D must represent different answers.
-
-    Do NOT create options that are:
-    - identical
-    - duplicates with different capitalization
-    - duplicates with extra spaces
-    - duplicates with minor punctuation changes
-    - essentially the same answer written differently
-
-    Before returning the quiz, check every question individually
-    and make sure all four options are unique.
-
-    QUESTION RULE:
-
-    Every question must have one clearly correct answer.
-
-    Never create a question where:
-    - two options could both be correct
-    - no option is correct
-    - the correct answer is missing
-    - the answer index points to a wrong option
-
-    QUALITY RULE:
-
-    Questions must be clear, educational and directly related
-    to the user's requested topic.
-
-    Do not invent facts.
-
-    For calculation questions:
-    calculate the answer before selecting the answer index.
-
-    For programming questions:
-    independently verify the code behavior.
-
-    EXPLANATION RULE:
-
-    The explanation must briefly explain why the selected
-    correct option is correct.
-
-    Return ONLY valid JSON.
-
-    Do NOT use markdown.
-    Do NOT use ```json.
-    Do NOT add text before or after the JSON.
-
-    REQUIRED JSON STRUCTURE:
+    REQUIRED JSON:
 
     {{
         "questions": [
@@ -192,31 +140,142 @@ def generate_quiz(mistral_client, message):
                     "Option D"
                 ],
                 "answer": 0,
-                "explanation": "Short explanation"
+                "explanation": "Why the selected option is correct."
             }}
         ]
     }}
 
-    FINAL CHECK BEFORE RETURNING JSON:
+    STRICT ACCURACY RULES:
 
-    Count the questions.
+    1. Every question must have one and only one objectively correct answer.
 
-    Required number:
-    {question_count}
+    2. Before creating a question, independently determine the correct answer.
 
-    Count the options in every question.
+    3. Then create three clearly incorrect but plausible distractors.
 
-    Required number:
-    4
+    4. NEVER create an ambiguous question.
 
-    Check that every question has:
-    - a non-empty question
-    - exactly 4 unique options
-    - one correct option
-    - a valid answer index
-    - an explanation
+    5. NEVER create a question where the answer depends on interpretation.
 
-    Return the JSON only after all checks pass.
+    6. NEVER create a question where two options can reasonably be correct.
+
+    7. NEVER create an option that is partially correct when the question asks for one exact answer.
+
+    8. The correct answer MUST appear exactly once in the options.
+
+    9. The answer index MUST point to that exact option.
+
+    10. The explanation MUST match the selected option exactly.
+
+    PROGRAMMING QUESTIONS:
+
+    If the topic is Python or another programming language:
+
+    - Verify the syntax before generating the question.
+    - Verify the actual runtime behavior before selecting the answer.
+    - Do not invent syntax.
+    - Do not use ambiguous wording.
+    - Prefer simple, well-established Python facts.
+    - Avoid questions involving multiple interpretations.
+    - Avoid obscure edge cases.
+    - Avoid questions where different Python versions could behave differently.
+    - Avoid questions involving implementation details unless absolutely certain.
+
+    PYTHON SAFETY RULES:
+
+    Do NOT create ambiguous questions about `del`.
+
+    Do NOT ask vague questions such as:
+    "What does del do?"
+    
+    Instead, if using `del`, specify the exact code, for example:
+    `numbers = [10, 20, 30]`
+    `del numbers[1]`
+    and ask what the resulting list is.
+
+    Do NOT create ambiguous questions about function default arguments.
+
+    Do NOT use syntactically questionable options such as:
+    `def func(a, b=)`
+    
+    Every code option must be valid Python syntax if it is presented as valid syntax.
+
+    Do NOT use trailing commas, optional syntax, or unusual syntax merely to create distractors.
+
+    Prefer straightforward questions such as:
+    - What is the output of a simple Python expression?
+    - Which keyword defines a function?
+    - Which data type stores key-value pairs?
+    - Which method converts a string to uppercase?
+    - What does len() return?
+    - Which symbol starts a comment?
+    - Which collection does not allow duplicate elements?
+    - What is the result of a simple list operation?
+
+    CODE VERIFICATION:
+
+    For every programming question, mentally execute or parse the code
+    before selecting the answer.
+
+    For example, if the question contains:
+
+    numbers = [10, 20, 30]
+    print(numbers[1])
+
+    the correct answer must be based on the actual Python result.
+
+    Do not guess.
+
+    OPTION RULES:
+
+    All four options must be different.
+
+    Do NOT use:
+    - duplicate options
+    - capitalization-only differences
+    - punctuation-only differences
+    - whitespace-only differences
+    - synonyms representing the same answer
+    - two options that are both technically correct
+    - an option that contains the correct answer plus extra misleading text
+
+    QUESTION QUALITY:
+
+    Questions must be:
+    - clear
+    - concise
+    - educational
+    - directly related to the requested topic
+    - objectively answerable
+
+    Avoid:
+    - vague wording
+    - trick questions
+    - subjective questions
+    - controversial facts
+    - uncertain facts
+    - obscure implementation details
+    - questions with multiple valid interpretations
+
+    FINAL SELF-CHECK:
+
+    Before returning the JSON, independently check EACH question:
+
+    A. Is the question factually correct?
+    B. Is there exactly one correct option?
+    C. Is the correct answer actually present?
+    D. Does the answer index point to the correct option?
+    E. Is every option distinct?
+    F. Does the explanation match the selected option?
+    G. Is the question unambiguous?
+    H. For programming questions, is the syntax and behavior correct?
+    I. Is the required question count exactly {question_count}?
+    J. Does every question contain exactly 4 options?
+
+    If ANY question fails one of these checks, discard that question
+    and create a new one.
+
+    Return the JSON only after ALL questions pass these checks.
     """
 
     previous_error = ""

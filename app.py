@@ -471,18 +471,18 @@ def chat():
     data = request.get_json()
 
     message = data.get("message", "").strip()
+    is_regenerate = data.get("regenerate", False)
 
-    if not message:
-        return jsonify({
-            "error": "Message cannot be empty."
+    if not is_regenerate:
+        if not message:
+            return jsonify({
+                "error": "Message cannot be empty."
         }), 400
 
     if len(message) > 5000:
         return jsonify({
             "error": "Message is too long. Maximum 5000 characters allowed."
         }), 400
-
-    is_regenerate = data.get("regenerate", False)
 
     if is_regenerate:
         conversation_id = session.get("conversation_id")
@@ -749,15 +749,15 @@ def chat():
         else:
             intent = detect_intent(message)
 
-        print("Detected intent:", intent)
-
         # ==================================================
         # CALCULATOR
         # ==================================================
 
         if intent == "calculator":
 
-            result = calculate_expression(message)
+            result = calculate_expression(
+                message.replace("calculate", "").strip()
+            )
 
             if not is_regenerate:
                 save_message(

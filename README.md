@@ -4,6 +4,11 @@ Your AI Learning Assistant 🎓
 
 DoubtBot is an AI-powered learning assistant designed to help students understand concepts, ask questions, study from PDFs, generate quizzes, create notes, and plan their studies from a single platform.
 
+## 🚀 Project Links
+
+- 🌐 **Live Demo:** https://doubtbot.onrender.com
+- 💻 **GitHub Repository:** https://github.com/shashikumarsinghai/DoubtBot
+
 ## Features
 
 - 🤖 AI Chatbot

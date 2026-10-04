@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang ="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoubtBot</title>
+
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    
+</head>
+
+<body>
+    <div class="chat-container">
+
+        <header class="chat-header">
+            
+            <button id="menu-button">☰</button>
+
+            <div>
+                <h1>🤖 DoubtBot</h1>
+                <p>Your AI Learning Assistant</p>
+            </div>
+
+            <div id="dashboard-menu" class="dashboard-menu">
+
+                <button id="close-menu-button">✕</button>
+
+                {% if session.get("user_id") %}
+
+                    <span>Welcome, {{ session.get("username") }} 👋</span>
+
+                    <a href="/profile">👤 Profile</a>
+
+                    <a href="/conversations">💬 Recent Chats</a>
+
+                    <a href="/new-chat">+ New Chat</a>
+
+                    <a href="/logout">🚪 Logout</a>
+
+                {% else %}
+
+                    <a href="/login">🔐 Login</a>
+
+                    <a href="/register">📝 Register</a>
+
+                {% endif %}
+
+                <button id="clear-button">🗑️ Clear Chat</button>
+
+                <button id="theme-button">🌙 Dark Mode</button>
+
+            </div>
+
+        </header>
+
+        <main id="chat">
+            <div class="message bot">
+                Hello! 👋 What would you like to learn today?
+            </div>
+        </main>
+
+        <div class="pdf-upload">
+            <input
+                type="file"
+                id="pdf-file"
+                accept=".pdf"
+            >
+
+             <button id="upload-pdf-button">
+                📄 Upload PDF
+            </button>
+
+            <button id="remove-pdf-button">
+                🗑️ Remove PDF
+            </button>
+
+            <span id="pdf-status"></span>
+
+        </div>
+
+        <div class="chat-input">
+            <input
+                type="text"
+                id="message"
+                placeholder="Ask your doubt..."
+            >
+
+            <button id="send-button">Send</button>
+        </div>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    
+</body>
+</html>

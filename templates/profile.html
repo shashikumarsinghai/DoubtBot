@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - DoubtBot</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="auth-container">
+
+        <h1>👤 Your Profile</h1>
+        <p>Manage your DoubtBot account</p>
+
+        <div class="profile-info">
+
+            <p>
+                <strong>Username:</strong>
+                {{ user.username }}
+            </p>
+
+            <p>
+                <strong>Email:</strong>
+                {{ user.email }}
+            </p>
+
+        </div>
+
+                <div class="quiz-history">
+
+            <h2>📊 Quiz History</h2>
+
+            {% if quiz_results %}
+
+                {% for quiz in quiz_results %}
+
+                    <div class="quiz-result">
+
+                        <p>
+                            <strong>Score:</strong>
+                            {{ quiz.score }}/{{ quiz.total_questions }}
+                        </p>
+
+                        <p>
+                            <strong>Date:</strong>
+                            {{ quiz.created_at.strftime("%d %b %Y, %I:%M %p") }}
+                        </p>
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>No quiz history yet.</p>
+
+            {% endif %}
+
+        </div>
+
+        <div class="auth-links">
+
+            <a href="/">← Back to Home</a>
+
+            <a href="/logout">Logout</a>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

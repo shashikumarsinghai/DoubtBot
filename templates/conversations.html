@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat History - DoubtBot</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="auth-container">
+
+        <h1>💬 Recent Chats</h1>
+
+        <p>Your previous conversations</p>
+
+        <div class="conversation-list">
+
+            {% if conversations %}
+
+                {% for conversation in conversations %}
+
+                    <a
+                        href="/load-chat/{{ conversation.id }}"
+                        class="conversation-item"
+                    >
+                        {{ conversation.title }}
+                    </a>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>No conversations yet.</p>
+
+            {% endif %}
+
+        </div>
+
+        <div class="auth-links">
+
+            <a href="/new-chat">+ New Chat</a>
+
+            <a href="/">← Back to Home</a>
+
+        </div>
+
+    </div>
+
+</body>
+</html>
